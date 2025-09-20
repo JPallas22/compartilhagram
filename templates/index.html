@@ -10,7 +10,8 @@
                      data-bs-target="#postModal"
                      data-image-src="{{ url_for('static', filename='uploads/' + post.image_file) }}"
                      data-post-caption="{{ post.caption }}"
-                     data-post-author="{{ post.author.username }}">
+                     data-post-author="{{ post.author.username }}"
+                     data-post-id="{{ post.id }}">
                     <img src="{{ url_for('static', filename='uploads/' + post.image_file) }}" class="card-img-top" alt="Imagem da postagem">
                     <div class="card-body">
                         <p class="card-text"><strong>@{{ post.author.username }}</strong>: {{ post.caption }}</p>
@@ -40,23 +41,6 @@
                                 <p class="mb-1"><small><strong>@{{ comment.author.username }}</strong>: {{ comment.text }}</small></p>
                             {% endfor %}
                         </div>
-
-                        {% if current_user.is_authenticated %}
-                            <form action="{{ url_for('comment_post', post_id=post.id) }}" method="POST" class="input-group">
-                                {{ comment_form.hidden_tag() }}
-                                {{ comment_form.text(class="form-control", placeholder="Adicionar um comentário...") }}
-                                <button type="submit" class="btn btn-outline-secondary">{{ comment_form.submit.label.text }}</button>
-                            </form>
-                        {% endif %}
-
-                        {% if post.author == current_user %}
-                            <div class="d-flex justify-content-end mt-2">
-                                <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-sm btn-outline-secondary me-2">Editar</a>
-                                <form action="{{ url_for('delete_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta postagem?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
-                                </form>
-                            </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -73,6 +57,16 @@
                 <div class="modal-body post-modal-body">
                     <img id="modalImage" src="" alt="Imagem completa" class="img-fluid post-modal-image">
                     <p id="modalCaption" class="mt-3"></p>
+                    <hr>
+                    <div id="modalComments" class="mb-3">
+                        </div>
+                    {% if current_user.is_authenticated %}
+                        <form id="commentForm" method="POST" class="input-group">
+                            {{ comment_form.hidden_tag() }}
+                            {{ comment_form.text(class="form-control", placeholder="Adicionar um comentário...") }}
+                            <button type="submit" class="btn btn-outline-secondary">{{ comment_form.submit.label.text }}</button>
+                        </form>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -88,14 +82,21 @@
                 const imageSrc = button.getAttribute('data-image-src');
                 const postCaption = button.getAttribute('data-post-caption');
                 const postAuthor = button.getAttribute('data-post-author');
+                const postId = button.getAttribute('data-post-id');
 
                 const modalImage = postModal.querySelector('#modalImage');
                 const modalCaption = postModal.querySelector('#modalCaption');
                 const modalTitle = postModal.querySelector('.modal-title');
+                const commentForm = postModal.querySelector('#commentForm');
 
                 modalImage.src = imageSrc;
                 modalCaption.textContent = `${postAuthor}: ${postCaption}`;
                 modalTitle.textContent = `@${postAuthor}`;
+
+                // Define o action do formulário de comentários com o post_id
+                if (commentForm) {
+                    commentForm.action = `/post/${postId}/comment`;
+                }
             });
         }
     </script>
