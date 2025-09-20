@@ -8,6 +8,7 @@ from wtforms import StringField, PasswordField, SubmitField, TextAreaField, File
 from wtforms.validators import DataRequired, EqualTo, Length
 import os
 import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or 'sua_chave_secreta_aqui'
@@ -17,7 +18,6 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
-# Configuração para upload de arquivos
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
@@ -30,6 +30,8 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     posts = db.relationship('Post', backref='author', lazy=True)
+    comments = db.relationship('Comment', backref='author', lazy=True)
+    likes = db.relationship('Like', backref='author', lazy=True)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -40,8 +42,23 @@ class User(db.Model, UserMixin):
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     caption = db.Column(db.Text, nullable=False)
-    image_file = db.Column(db.String(255), nullable=False) # Mudou de 'image_url' para 'image_file'
+    image_file = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    comments = db.relationship('Comment', backref='post', lazy=True)
+    likes = db.relationship('Like', backref='post', lazy=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+
+class Like(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    db.UniqueConstraint('user_id', 'post_id', name='_user_post_uc')
 
 # Formulários WTForms
 class RegistrationForm(FlaskForm):
@@ -56,13 +73,17 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 class NewPostForm(FlaskForm):
-    image_file = FileField('Imagem', validators=[DataRequired()]) # Mudou para FileField
+    image_file = FileField('Imagem', validators=[DataRequired()])
     caption = TextAreaField('Legenda', validators=[DataRequired()])
     submit = SubmitField('Compartilhar')
 
 class EditPostForm(FlaskForm):
     caption = TextAreaField('Nova Legenda', validators=[DataRequired()])
     submit = SubmitField('Salvar Edição')
+
+class CommentForm(FlaskForm):
+    text = StringField('Comentário', validators=[DataRequired()])
+    submit = SubmitField('Comentar')
 
 # User Loader para Flask-Login
 @login_manager.user_loader
@@ -73,8 +94,9 @@ def load_user(user_id):
 @app.route('/')
 @app.route('/index')
 def index():
-    posts = Post.query.all()
-    return render_template('index.html', posts=posts)
+    posts = Post.query.order_by(Post.created_at.desc()).all()
+    comment_form = CommentForm()
+    return render_template('index.html', posts=posts, comment_form=comment_form)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -113,10 +135,8 @@ def logout():
 def new_post():
     form = NewPostForm()
     if form.validate_on_submit():
-        # Salva o arquivo enviado
         image_file = form.image_file.data
         filename = secure_filename(image_file.filename)
-        # Gera um nome único para o arquivo para evitar conflitos
         unique_filename = str(uuid.uuid4()) + '_' + filename
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         image_file.save(file_path)
@@ -153,7 +173,6 @@ def delete_post(post_id):
     if post.author != current_user:
         abort(403)
     
-    # Opcional: remover o arquivo da imagem do servidor
     file_path = os.path.join(app.config['UPLOAD_FOLDER'], post.image_file)
     if os.path.exists(file_path):
         os.remove(file_path)
@@ -161,6 +180,38 @@ def delete_post(post_id):
     db.session.delete(post)
     db.session.commit()
     flash('Sua postagem foi excluída.', 'info')
+    return redirect(url_for('index'))
+
+@app.route('/post/<int:post_id>/like', methods=['POST'])
+@login_required
+def like_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    like = Like.query.filter_by(user_id=current_user.id, post_id=post.id).first()
+    
+    if like:
+        db.session.delete(like)
+        flash('Você descurtiu a postagem.', 'info')
+    else:
+        new_like = Like(author=current_user, post=post)
+        db.session.add(new_like)
+        flash('Você curtiu a postagem!', 'success')
+    
+    db.session.commit()
+    return redirect(url_for('index'))
+
+@app.route('/post/<int:post_id>/comment', methods=['POST'])
+@login_required
+def comment_post(post_id):
+    post = Post.query.get_or_404(post_id)
+    form = CommentForm()
+    if form.validate_on_submit():
+        comment = Comment(text=form.text.data, author=current_user, post=post)
+        db.session.add(comment)
+        db.session.commit()
+        flash('Seu comentário foi adicionado!', 'success')
+    else:
+        flash('Erro ao adicionar comentário.', 'danger')
+    
     return redirect(url_for('index'))
 
 if __name__ == '__main__':

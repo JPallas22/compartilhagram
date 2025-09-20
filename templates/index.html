@@ -14,8 +14,43 @@
                     <img src="{{ url_for('static', filename='uploads/' + post.image_file) }}" class="card-img-top" alt="Imagem da postagem">
                     <div class="card-body">
                         <p class="card-text"><strong>@{{ post.author.username }}</strong>: {{ post.caption }}</p>
+
+                        <div class="post-actions d-flex align-items-center mb-3">
+                            <form action="{{ url_for('like_post', post_id=post.id) }}" method="POST" class="me-2">
+                                <button type="submit" class="btn btn-link p-0 like-btn">
+                                    {% set liked_by_current_user = false %}
+                                    {% for like in post.likes %}
+                                        {% if like.user_id == current_user.id %}
+                                            {% set liked_by_current_user = true %}
+                                        {% endif %}
+                                    {% endfor %}
+
+                                    {% if liked_by_current_user %}
+                                        <i class="bi bi-heart-fill text-danger"></i>
+                                    {% else %}
+                                        <i class="bi bi-heart"></i>
+                                    {% endif %}
+                                </button>
+                            </form>
+                            <span>{{ post.likes|length }} curtidas</span>
+                        </div>
+
+                        <div class="post-comments mb-3">
+                            {% for comment in post.comments %}
+                                <p class="mb-1"><small><strong>@{{ comment.author.username }}</strong>: {{ comment.text }}</small></p>
+                            {% endfor %}
+                        </div>
+
+                        {% if current_user.is_authenticated %}
+                            <form action="{{ url_for('comment_post', post_id=post.id) }}" method="POST" class="input-group">
+                                {{ comment_form.hidden_tag() }}
+                                {{ comment_form.text(class="form-control", placeholder="Adicionar um comentário...") }}
+                                <button type="submit" class="btn btn-outline-secondary">{{ comment_form.submit.label.text }}</button>
+                            </form>
+                        {% endif %}
+
                         {% if post.author == current_user %}
-                            <div class="d-flex justify-content-end">
+                            <div class="d-flex justify-content-end mt-2">
                                 <a href="{{ url_for('edit_post', post_id=post.id) }}" class="btn btn-sm btn-outline-secondary me-2">Editar</a>
                                 <form action="{{ url_for('delete_post', post_id=post.id) }}" method="POST" onsubmit="return confirm('Tem certeza que deseja excluir esta postagem?');">
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Excluir</button>
@@ -47,19 +82,21 @@
 {% block scripts %}
     <script>
         const postModal = document.getElementById('postModal');
-        postModal.addEventListener('show.bs.modal', event => {
-            const button = event.relatedTarget;
-            const imageSrc = button.getAttribute('data-image-src');
-            const postCaption = button.getAttribute('data-post-caption');
-            const postAuthor = button.getAttribute('data-post-author');
-            
-            const modalImage = postModal.querySelector('#modalImage');
-            const modalCaption = postModal.querySelector('#modalCaption');
-            const modalTitle = postModal.querySelector('.modal-title');
-            
-            modalImage.src = imageSrc;
-            modalCaption.textContent = `${postAuthor}: ${postCaption}`;
-            modalTitle.textContent = `@${postAuthor}`;
-        });
+        if (postModal) {
+            postModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget;
+                const imageSrc = button.getAttribute('data-image-src');
+                const postCaption = button.getAttribute('data-post-caption');
+                const postAuthor = button.getAttribute('data-post-author');
+
+                const modalImage = postModal.querySelector('#modalImage');
+                const modalCaption = postModal.querySelector('#modalCaption');
+                const modalTitle = postModal.querySelector('.modal-title');
+
+                modalImage.src = imageSrc;
+                modalCaption.textContent = `${postAuthor}: ${postCaption}`;
+                modalTitle.textContent = `@${postAuthor}`;
+            });
+        }
     </script>
 {% endblock %}

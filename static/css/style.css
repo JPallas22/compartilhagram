@@ -1,69 +1,65 @@
 body {
-    background-color: #fafafa;
+    background-color: #f0f2f5;
+    font-family: Arial, sans-serif;
 }
 
 .navbar {
+    margin-bottom: 20px;
+    background-color: #ffffff;
     border-bottom: 1px solid #dbdbdb;
 }
 
-.card {
-    border: 1px solid #dbdbdb;
-    border-radius: 3px;
-    box-shadow: none;
-}
-
-.card-img-top {
-    height: 400px;
-    object-fit: cover;
-}
-
-.card-text strong {
-    margin-right: 5px;
-}
-
-/* Botão Flutuante */
-.floating-btn {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    width: 60px;
-    height: 60px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-    color: white;
-}
-
-/* Estilo para o Card clicável */
 .post-card {
+    border: 1px solid #dbdbdb;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+
+.post-card .card-img-top {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
     cursor: pointer;
 }
 
-/* Estilo para a imagem dentro do modal */
-.post-modal-image {
-    width: 100%;
-    max-width: 800px; /* Adapte para o tamanho desejado, 1920px pode ser muito grande */
-    height: auto;
-    object-fit: contain;
+.post-actions .like-btn {
+    color: #262626;
+    font-size: 1.5rem;
+    cursor: pointer;
 }
 
-/* Estilo para o corpo do modal, com flexbox para layout */
-.post-modal-body {
+.post-actions .like-btn i {
+    transition: transform 0.2s ease-in-out;
+}
+
+.post-actions .like-btn i:hover {
+    transform: scale(1.1);
+}
+
+.form-control, .btn {
+    border-radius: 20px;
+}
+
+.floating-btn {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 2rem;
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    z-index: 1000;
 }
 
-@media (min-width: 992px) {
-    .post-modal-body {
-        flex-direction: row;
-        gap: 20px;
-    }
-    .post-modal-body img {
-        flex: 2;
-    }
-    .post-modal-body p {
-        flex: 1;
-    }
+.post-modal-image {
+    max-height: 80vh;
+    object-fit: contain;
+    width: 100%;
 }
