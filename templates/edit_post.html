@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="text-center">Editar Postagem</h1>
+            <form method="POST" action="">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    <img src="{{ url_for('static', filename='uploads/' + post.image_file) }}" class="img-fluid rounded mb-3" alt="Imagem da postagem">
+                    {{ form.caption.label(class="form-label") }}
+                    {{ form.caption(class="form-control", rows=4) }}
+                </div>
+                <div class="d-grid gap-2">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

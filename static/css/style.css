@@ -1,0 +1,69 @@
+body {
+    background-color: #fafafa;
+}
+
+.navbar {
+    border-bottom: 1px solid #dbdbdb;
+}
+
+.card {
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    box-shadow: none;
+}
+
+.card-img-top {
+    height: 400px;
+    object-fit: cover;
+}
+
+.card-text strong {
+    margin-right: 5px;
+}
+
+/* Botão Flutuante */
+.floating-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem;
+    color: white;
+}
+
+/* Estilo para o Card clicável */
+.post-card {
+    cursor: pointer;
+}
+
+/* Estilo para a imagem dentro do modal */
+.post-modal-image {
+    width: 100%;
+    max-width: 800px; /* Adapte para o tamanho desejado, 1920px pode ser muito grande */
+    height: auto;
+    object-fit: contain;
+}
+
+/* Estilo para o corpo do modal, com flexbox para layout */
+.post-modal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+@media (min-width: 992px) {
+    .post-modal-body {
+        flex-direction: row;
+        gap: 20px;
+    }
+    .post-modal-body img {
+        flex: 2;
+    }
+    .post-modal-body p {
+        flex: 1;
+    }
+}
